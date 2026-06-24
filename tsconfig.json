@@ -1,0 +1,9 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./shared" },
+    { "path": "./services/event-producer" },
+    { "path": "./services/notification-consumer" },
+    { "path": "./services/analytics-consumer" }
+  ]
+}
