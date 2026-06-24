@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@prisma/client": "^5.10.2",
+    "amqplib": "^0.10.3",
     "winston": "^3.12.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.5",
     "prisma": "^5.10.2"
   }
 }
