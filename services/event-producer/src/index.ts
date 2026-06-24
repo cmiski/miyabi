@@ -3,6 +3,7 @@ import { logger, RabbitMQClient } from '@miyabi/shared';
 import dotenv from 'dotenv';
 import { orderRouter } from './order.controller.js';
 import { OutboxWorker } from './outbox.worker.js';
+import { metricsRouter } from './metrics.controller.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Mount routers
 app.use('/orders', orderRouter);
+app.use('/metrics', metricsRouter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'event-producer' });
