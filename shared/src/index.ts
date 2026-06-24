@@ -6,3 +6,6 @@ export const logger = winston.createLogger({
   defaultMeta: { service: 'miyabi-service' },
   transports: [new winston.transports.Console()],
 });
+
+export * from './db.js';
+export * from './outbox.js';
