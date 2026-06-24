@@ -47,8 +47,8 @@ async function bootstrap() {
 
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
-  } catch (err: any) {
-    logger.error('Failed to bootstrap Event Producer service', { error: err.message });
+  } catch (err) {
+    logger.error('Failed to bootstrap Event Producer service', { error: (err as Error).message });
     process.exit(1);
   }
 }

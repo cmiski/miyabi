@@ -9,7 +9,7 @@ const CreateOrderSchema = z.object({
 
 export const orderRouter = Router();
 
-orderRouter.post('/', async (req: Request, res: Response): Promise<any> => {
+orderRouter.post('/', async (req: Request, res: Response) => {
   try {
     const parseResult = CreateOrderSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -49,8 +49,8 @@ orderRouter.post('/', async (req: Request, res: Response): Promise<any> => {
 
     logger.info('Order and outbox event created successfully', { orderId: order.id });
     return res.status(201).json(order);
-  } catch (err: any) {
-    logger.error('Failed to create order', { error: err.message });
+  } catch (err) {
+    logger.error('Failed to create order', { error: (err as Error).message });
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

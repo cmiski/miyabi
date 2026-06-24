@@ -1,16 +1,24 @@
 import { prisma, RabbitMQClient, logger } from '@miyabi/shared';
 
+interface PendingEvent {
+  id: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  version: string;
+  retryCount: number;
+}
+
 export class OutboxWorker {
   private rabbitmqClient: RabbitMQClient;
   private intervalMs: number;
   private maxRetries: number;
   private batchSize: number;
-  private isRunning: boolean = false;
+  private isRunning = false;
   private timer?: NodeJS.Timeout;
 
   constructor(
     rabbitmqClient: RabbitMQClient,
-    options?: { intervalMs?: number; maxRetries?: number; batchSize?: number }
+    options?: { intervalMs?: number; maxRetries?: number; batchSize?: number },
   ) {
     this.rabbitmqClient = rabbitmqClient;
     this.intervalMs = options?.intervalMs ?? 1000;
@@ -38,7 +46,7 @@ export class OutboxWorker {
 
     this.processOutbox()
       .catch((err) => {
-        logger.error('Error in outbox processing loop', { error: err.message });
+        logger.error('Error in outbox processing loop', { error: (err as Error).message });
       })
       .finally(() => {
         if (this.isRunning) {
@@ -51,7 +59,7 @@ export class OutboxWorker {
     // 1. Claim pending events transactionally using FOR UPDATE SKIP LOCKED
     const claimedEvents = await prisma.$transaction(async (tx) => {
       // Postgres raw query to lock pending rows
-      const pending = await tx.$queryRawUnsafe<any[]>(
+      const pending = await tx.$queryRawUnsafe<PendingEvent[]>(
         `
         SELECT id, event_type as "eventType", payload, version, retry_count as "retryCount"
         FROM outbox_events
@@ -60,7 +68,7 @@ export class OutboxWorker {
         LIMIT $1
         FOR UPDATE SKIP LOCKED
       `,
-        this.batchSize
+        this.batchSize,
       );
 
       if (pending.length === 0) {
@@ -97,9 +105,15 @@ export class OutboxWorker {
             processedAt: new Date(),
           },
         });
-        logger.info(`Successfully published event to RabbitMQ`, { eventId: event.id, type: event.eventType });
-      } catch (err: any) {
-        logger.error(`Failed to publish event to RabbitMQ`, { eventId: event.id, error: err.message });
+        logger.info('Successfully published event to RabbitMQ', {
+          eventId: event.id,
+          type: event.eventType,
+        });
+      } catch (err) {
+        logger.error('Failed to publish event to RabbitMQ', {
+          eventId: event.id,
+          error: (err as Error).message,
+        });
 
         const nextRetryCount = event.retryCount + 1;
         const shouldRetry = nextRetryCount < this.maxRetries;
@@ -109,7 +123,7 @@ export class OutboxWorker {
           data: {
             status: shouldRetry ? 'PENDING' : 'FAILED',
             retryCount: nextRetryCount,
-            error: err.message || 'Unknown error',
+            error: (err as Error).message || 'Unknown error',
           },
         });
       }

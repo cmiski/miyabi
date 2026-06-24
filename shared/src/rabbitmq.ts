@@ -21,7 +21,7 @@ export class RabbitMQClient {
       try {
         logger.info(`Connecting to RabbitMQ (attempt ${attempts + 1}/${maxAttempts})...`);
         this.connection = await amqp.connect(this.url);
-        
+
         this.connection.on('error', (err) => {
           logger.error('RabbitMQ connection error', { error: err.message });
           this.handleDisconnect();
@@ -37,9 +37,11 @@ export class RabbitMQClient {
 
         logger.info('Connected to RabbitMQ and declared exchange successfully');
         return;
-      } catch (err: any) {
+      } catch (err) {
         attempts++;
-        logger.error(`Failed to connect to RabbitMQ: ${err.message}. Retrying in ${delay}ms...`);
+        logger.error(
+          `Failed to connect to RabbitMQ: ${(err as Error).message}. Retrying in ${delay}ms...`,
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -64,7 +66,11 @@ export class RabbitMQClient {
     return this.channel;
   }
 
-  async publish(routingKey: string, payload: Record<string, unknown>, version = '1.0.0'): Promise<boolean> {
+  async publish(
+    routingKey: string,
+    payload: Record<string, unknown>,
+    version = '1.0.0',
+  ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       try {
         const channel = this.getChannel();
@@ -75,7 +81,7 @@ export class RabbitMQClient {
               timestamp: new Date().toISOString(),
               version,
             },
-          })
+          }),
         );
 
         channel.publish(
@@ -91,7 +97,7 @@ export class RabbitMQClient {
               logger.debug('RabbitMQ publish ACK received', { routingKey });
               resolve(true);
             }
-          }
+          },
         );
       } catch (err) {
         logger.error('Error during publishing to RabbitMQ', { error: (err as Error).message });
