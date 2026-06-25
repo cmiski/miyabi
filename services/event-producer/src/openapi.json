@@ -1,0 +1,99 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Miyabi Event-Driven Service API",
+    "description": "Production-grade Event Producer Service with transactional Outbox publishing.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/orders": {
+      "post": {
+        "summary": "Create a new Order",
+        "description": "Creates an order in the database and writes a pending outbox event in the same transaction.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["customerId", "amount"],
+                "properties": {
+                  "customerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "d3b07384-d113-4956-b514-7f3b5478d321"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 150.5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "customerId": { "type": "string", "format": "uuid" },
+                    "amount": { "type": "string" },
+                    "status": { "type": "string" },
+                    "createdAt": { "type": "string", "format": "date-time" },
+                    "updatedAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Retrieve live statistics",
+        "description": "Fetches Postgres outbox state counts and Redis consumer counters.",
+        "responses": {
+          "200": {
+            "description": "Live metrics retrieved successfully"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "System health check",
+        "description": "Checks the active connectivity of Postgres, Redis, and RabbitMQ.",
+        "responses": {
+          "200": {
+            "description": "All systems healthy"
+          },
+          "503": {
+            "description": "One or more external services are unhealthy"
+          }
+        }
+      }
+    }
+  }
+}

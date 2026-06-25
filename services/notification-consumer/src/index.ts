@@ -1,5 +1,5 @@
 import express from 'express';
-import { logger } from '@miyabi/shared';
+import { logger, redis } from '@miyabi/shared';
 import dotenv from 'dotenv';
 import { NotificationConsumer } from './notification.consumer.js';
 
@@ -29,17 +29,24 @@ async function bootstrap() {
     });
 
     // Graceful shutdown handling
-    const shutdown = async () => {
-      logger.info('Shutting down notification consumer...');
+    const shutdown = async (signal: string) => {
+      logger.info(`Received ${signal}. Shutting down notification consumer...`);
       server.close(() => {
         logger.info('Express health server closed');
       });
       await consumer.close();
+      try {
+        await redis.quit();
+        logger.info('Redis connection closed gracefully');
+      } catch (err) {
+        logger.error('Error closing Redis connection', { error: (err as Error).message });
+      }
+      logger.info('Graceful shutdown completed');
       process.exit(0);
     };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (err) {
     logger.error('Failed to bootstrap Notification Consumer service', {
       error: (err as Error).message,
