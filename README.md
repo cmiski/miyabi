@@ -1,4 +1,5 @@
 # miyabi
+Intern ID: CITS670
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -125,18 +126,3 @@ The OpenAPI spec is bundled in `services/event-producer/src/openapi.json`. After
 - `POST /orders` – create an order (validated with Zod)
 - `GET /metrics` – system metrics
 - `GET /health` – health check
-
----
-
-## Contributing
-
-Contributions are welcome! Please:
-1. Fork the repo and create a feature branch.
-2. Ensure `npm run lint` and `npm test` pass.
-3. Open a Pull Request describing your changes.
-
----
-
-## License
-
-MIT © 2026 miyabi contributors
